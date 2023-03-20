@@ -1,9 +1,9 @@
 /**
 * Implementation of several functions to manipulate BMP files.
 *
-* Completion time: ?
+* Completion time: 10min
 *
-* @author (your name), Ruben Acuna
+* @author Edgar Hakobyan, Ruben Acuna
 * @version 1.0
 */
 
@@ -11,11 +11,25 @@
 #include "Image.h"
 
 struct BMP_Header {
-	//TODO: Finish struct
+	char signature[2];
+    int file_size;
+    short reserved1;
+    short reserved2;
+    int offset;
 };
 
 struct DIB_Header{
-	//TODO: Finish struct
+	int size;
+    int img_width;
+    int img_height;
+    short planes;
+    short bits_per_pixel;
+    int compression;
+    int img_size;
+    int x_pixel_per_m;
+    int y_pixel_per_m;
+    int num_color_table_colors;
+    int num_important_colors
 };
 
 /**

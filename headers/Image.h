@@ -26,7 +26,9 @@ struct Image {
 };
 
 struct Pixel{
-	//TODO: Finish struct
+	unsigned char r;
+	unsigned char g;
+	unsigned char b;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
