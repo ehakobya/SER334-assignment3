@@ -19,7 +19,7 @@ struct BMP_Header {
 };
 
 struct DIB_Header{
-	int size;
+	int header_size;
     int img_width;
     int img_height;
     short planes;
@@ -67,7 +67,7 @@ void writeDIBHeader(FILE* file, struct DIB_Header* header);
 /**
  * Make BMP header based on width and height. Useful for creating a BMP file.
  *
- * @param  header: Pointer to the destination DIB header
+ * @param  header: Pointer to the destination BMP header
  * @param  width: Width of the image that this header is for
  * @param  height: Height of the image that this header is for
  */
