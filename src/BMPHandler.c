@@ -1,7 +1,7 @@
 /**
 * Implementation of BMPHandler
 *
-* Completion time: XXXXXXX
+* Completion time: 45 min
 *
 * @author Edgar Hakobyan
 * @version 1.0
@@ -57,17 +57,52 @@ void writeDIBHeader(FILE* file, struct DIB_Header* header) {
 }
 
 void makeBMPHeader(struct BMP_Header* header, int width, int height) {
-    //TODO
+    header->signature[0] = 'B';
+    header->signature[1] = 'M';
+    int temp = width * height * 3;
+//    header->file_size = 54 + ((4 - (temp % 4)) + (temp));
+    header->file_size = 54 + width * height * 3;
+    header->reserved1 = 0;
+    header->reserved2 = 0;
 }
 
 void makeDIBHeader(struct DIB_Header* header, int width, int height) {
-    //TODO
+    header->header_size = 40;
+    header->img_width = width;
+    header->img_height = height;
+    header->planes = 1;
+    header->bits_per_pixel = 24; //3 bytes = 24 bits
+    header->compression = 0;
+    header->img_size = width * height * 3; // TODO
+    header->x_pixel_per_m = 3780;
+    header->y_pixel_per_m = 3780;
+    header->num_color_table_colors = 0;
+    header->num_important_colors = 0;
 }
 
 void readPixelsBMP(FILE* file, struct Pixel** pArr, int width, int height) {
-    //TODO
+    int rowSize = (4 - ((width * 3) % 4)) + (width * 3);
+//    int rowSize = (width * 3 + 3) & ~3; // OTHER METHOD
+    int padding = rowSize - (width * 3);
+
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            fread(&pArr[i][j], sizeof (struct Pixel), 1, file);
+        }
+        fseek(file, padding, SEEK_CUR); // skip reading file by places indicated in padding
+    }
 }
 
 void writePixelsBMP(FILE* file, struct Pixel** pArr, int width, int height) {
-    //TODO
+    int rowSize = (4 - ((width * 3) % 4)) + (width * 3);
+//    int rowSize = (width * 3 + 3) & ~3; // OTHER METHOD
+    int padding = rowSize - (width * 3);
+        unsigned char zero[3] = {0, 0, 0};
+
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            fwrite(&pArr[i][j], sizeof (struct Pixel), 1, file);
+        }
+        fwrite(zero, 1, padding, file); // add padding 0's
+    }
 }
