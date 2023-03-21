@@ -3,8 +3,9 @@
 *
 * Completion time: ?
 *
-* @author (your name), Ruben Acuna
-* @version 9/9/2021
+* @author Edgar Hakobyan, Ruben Acuna
+* @Date 03/20/2023
+* @version 1.0
 */
 
 #ifndef PixelProcessor_H
