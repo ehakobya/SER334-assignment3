@@ -94,10 +94,10 @@ void readPixelsBMP(FILE* file, struct Pixel** pArr, int width, int height) {
 }
 
 void writePixelsBMP(FILE* file, struct Pixel** pArr, int width, int height) {
-    int rowSize = (4 - ((width * 3) % 4)) + (width * 3);
-//    int rowSize = (width * 3 + 3) & ~3; // OTHER METHOD
+//    int rowSize = (4 - ((width * 3) % 4)) + (width * 3);
+    int rowSize = (width * 3 + 3) & ~3;
     int padding = rowSize - (width * 3);
-        unsigned char zero[3] = {0, 0, 0};
+    unsigned char zero[3] = {0, 0, 0};
 
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
