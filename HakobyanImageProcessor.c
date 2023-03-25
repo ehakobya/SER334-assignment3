@@ -45,7 +45,6 @@ int main(int argc, char *argv[]) {
 
     FILE *file_input = fopen(inputFileName, "rb");
     if (file_input != NULL) printf("--> File Opened\n");
-
     readBMPHeader(file_input, &BMP);
     readDIBHeader(file_input, &DIB);
 
@@ -55,27 +54,26 @@ int main(int argc, char *argv[]) {
 //    displayDIB(DIB);
 //    printf("------------\n");
 
-
     struct Pixel **pixels = (struct Pixel **) malloc(sizeof(struct Pixel *) * DIB.img_height);
     for (int p = 0; p < DIB.img_height; p++) {
         pixels[p] = (struct Pixel *) malloc(sizeof(struct Pixel) * DIB.img_width);
     }
-
     readPixelsBMP(file_input, pixels, DIB.img_width, DIB.img_height);
     fclose(file_input);
 
     Image *img = image_create(pixels, DIB.img_width, DIB.img_height);
 
-    if (strcmp(w, "-w") == 0) {
-        image_apply_bw(img);
+    if (w != NULL) {
+        if (strcmp(w, "-w") == 0) {
+            image_apply_bw(img);
+        }
     }
-    if ( r != 0 || b != 0 || g != 0) {
+    if ( b != 0 ||g != 0 || r != 0) {
         image_apply_colorshift(img, r,g,b);
     }
     if (s != 0) {
         image_apply_resize(img, s);
     }
-
     makeBMPHeader(&BMP, img->width, img->height);
     makeDIBHeader(&DIB, img->width, img->height);
 
