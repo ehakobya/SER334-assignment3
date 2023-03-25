@@ -67,189 +67,29 @@ void image_apply_colorshift(Image* img, int rShift, int gShift, int bShift) {
 
 void image_apply_resize(Image* img, float factor) {
 
-    /*
-    int i, j;
-    Image * tmp = (Image*) malloc(sizeof(Image));
-    int newH = img->height * factor;
-    int newW = img->width * factor;
-
-    tmp->pArr = (struct Pixel**)malloc(sizeof(struct Pixel*) * tmp->height);
-    for (i = 0; i < tmp->height; i++) {
-        tmp->pArr[i] = (struct Pixel*)malloc(sizeof(struct Pixel) * tmp->width);
-        for (j = 0; j < tmp->width; j++) {
-            tmp->pArr[i][j] = img->pArr[i/factor][j/factor];
-        }
-    }
-    for (i = 0; i < img->height; i++)
-        free(img->pArr[i]);
-    free(img->pArr);
-
-
-     6 == 6.0
-
-    printf("%d\n", newWidth);
-    printf("%d\n", newHeight);
-
-    for (int i = 0 ; i < image_get_height(img) ; i++) {
-        for (int j = 0 ; j < image_get_height(img) ; j++) {
-            printf("| R:%d G:%d B:%d | ", img->pArr[i][j].red,img->pArr[i][j].green,img->pArr[i][j].blue);
-        }
-        printf("\n");
-    }
-    printf("\n");
-
- 2D pixel array
-    struct Pixel** newArr = (struct Pixel**)malloc((sizeof(struct Pixel*)* newHeight));
-    printf("%d\n", sizeof(newArr));
-    printf("%d\n", sizeof(struct Pixel*));
-    printf("%d\n", newHeight);
-    for (int p = 0; p < newHeight; p++) {
-        newArr[p] = (struct Pixel*)malloc(sizeof(struct Pixel) * newWidth);
-    }
-
-    struct Pixel** pixels = (struct Pixel**)malloc(sizeof(struct Pixel*) * 6);
-    for (int p = 0; p < 6; p++) {
-        pixels[p] = (struct Pixel*)malloc(sizeof(struct Pixel) * 6);
-    }
-
-    int newH = img->height * factor;
-    int newW = img->width * factor;
-    struct Pixel** pixels = (struct Pixel**)malloc(sizeof(struct Pixel*) * newH);
-    for (int p = 0; p < newH; p++) {
-        pixels[p] = (struct Pixel*)malloc(sizeof(struct Pixel) * newW);
-        for (int q = 0; q < newW; q++) {
-            pixels[p][q].red = 0;
-            pixels[p][q].green = 0;
-            pixels[p][q].blue = 0;
-        }
-    }
-    for (int i = 0; i < newH; i++) {
-        for (int j = 0; j < newW; j++) {
-            int original_i = round(i / factor);
-            int original_j = round(j / factor);
-            pixels[i][j] = img->pArr[original_i][original_j];
-        }
-    }
-
-    for (int i = 0; i < image_get_height(img); i++) {
-        free(img->pArr[i]);
-    }
-    free(img->pArr);
-
-    img->pArr = pixels;
-    img->height = newH;
-    img->width = newW;
-
-    printf("-------%d\n", newHeight);
-
+    int newWidth = (int)(img->width * factor);
+    int newHeight = (int)(img->height * factor);
     struct Pixel** pixels = (struct Pixel**)malloc(sizeof(struct Pixel*) * newHeight);
-    for (int p = 0; p < newHeight; p++) {
-        pixels[p] = (struct Pixel*)malloc(sizeof(struct Pixel) * newWidth);
+    for (int i = 0; i < newHeight; i++) {
+        pixels[i] = (struct Pixel*)malloc(sizeof(struct Pixel) * newWidth);
     }
-    printf("%llu\n", sizeof(newPix));
-    printf("%llu\n", sizeof(struct Pixel*));
-    printf("%d\n", newHeight);
+    // Create new image
+    Image* new_img = image_create(pixels, newWidth, newHeight);
 
-
-    for (int i = 0 ; i < newHeight ; i++) {
-        for (int j = 0 ; j < newWidth ; j++) {
-            printf("| R:%d G:%d B:%d | ", newArr[i][j].red,newArr[i][j].green,newArr[i][j].blue);
-        }
-        printf("\n");
-    }
-
-    int i;
-    int j;
-    for (i = 0 ; i < newHeight ; i++) {
-        for (j = 0 ; j < newWidth ; j++) {
-            int original_i = floor(i / 2);
-            printf("Orig I: %d\n", original_i);
-            int original_j = floor(j / 2);
-            printf("Orig J: %d\n", original_j);
-            printf("I: %d\n", i);
-            printf("J: %d\n", j);
-//            int original_index = original_i* image_get_width(img) + original_j;
-//            int new_index = i + newWidth + j;
-            pixels[i][j] = img->pArr[original_i][original_j];
-            printf("%d %d %d\n", img->pArr[original_i][original_j].red, img->pArr[original_i][original_j].green, img->pArr[original_i][original_j].blue);
-            printf("----\n");
-        }
-    }
-    img->pArr = pixels;
-    img->height = newHeight;
-    img->width = newWidth;
-
-    int newHeight = round(image_get_height(img) * factor);
-    int newWidth = round(image_get_width(img) * factor);
-
-    if (newHeight <= 0 || newWidth <= 0) {
-        printf("Error: Invalid dimensions after resizing\n");
-        return;
-    }
-
-    struct Pixel** pixels = (struct Pixel**)malloc(sizeof(struct Pixel*) * newHeight);
-    if (pixels == NULL) {
-        printf("Error: Failed to allocate memory for pixel array\n");
-        return;
-    }
-    for (int p = 0; p < newHeight; p++) {
-        pixels[p] = (struct Pixel*)malloc(sizeof(struct Pixel) * newWidth);
-        if (pixels[p] == NULL) {
-            printf("Error: Failed to allocate memory for pixel row %d\n", p);
-            for (int q = 0; q < p; q++) {
-                free(pixels[q]);
-            }
-            free(pixels);
-            return;
-        }
-    }
-
+    // Copy pixels and scale
     for (int i = 0; i < newHeight; i++) {
         for (int j = 0; j < newWidth; j++) {
-            int original_i = round(i / factor);
-            int original_j = round(j / factor);
-            if (original_i < 0 || original_i >= image_get_height(img) || original_j < 0 || original_j >= image_get_width(img)) {
-                printf("Warning: Invalid original pixel coordinates (%d, %d) for new pixel (%d, %d)\n", original_i, original_j, i, j);
-                pixels[i][j].red = 0;
-                pixels[i][j].green = 0;
-                pixels[i][j].blue = 0;
-            } else {
-                pixels[i][j] = img->pArr[original_i][original_j];
-            }
+            int oldX = (int)(j / factor);
+            int oldY = (int)(i / factor);
+            new_img->pArr[i][j] = img->pArr[oldY][oldX];
         }
     }
 
-    for (int i = 0; i < image_get_height(img); i++) {
-        free(img->pArr[i]);
-    }
     free(img->pArr);
-
-    img->pArr = pixels;
-    img->height = newHeight;
+    img->pArr = new_img->pArr;
     img->width = newWidth;
-    */
+    img->height = newHeight;
 
-    uint32_t i = 0, j = 0;
-    Image *tmp = (Image*)malloc(sizeof(Image));
-    tmp->height = img->height * factor;
-    tmp->width = img->width * factor;
-
-    tmp->pArr = (struct Pixel**)malloc(sizeof(struct Pixel*) * tmp->height);
-    for (i = 0; i < tmp->height; i++) {
-        tmp->pArr[i] = (struct Pixel*)malloc(sizeof(struct Pixel) * tmp->width);
-        for (j = 0; j < tmp->width; j++) {
-            tmp->pArr[i][j] = img->pArr[(int)floorf(i/factor)][(int)floorf(j/factor)];
-        }
-    }
-
-    for (i = 0; i < img->height; i++)
-        free(img->pArr[i]);
-    free(img->pArr);
-
-    img->width = tmp->width;
-    img->height = tmp->height;
-    img->pArr = tmp->pArr;
-    free(tmp);
 
 //    int newHeight = image_get_height(img) * factor;
 //    printf("%d\n", newHeight);
