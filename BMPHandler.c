@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "../headers/BMPHandler.h"
+#include "BMPHandler.h"
 
 
 void readBMPHeader(FILE* file, struct BMP_Header* header) {

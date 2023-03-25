@@ -13,8 +13,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
-#include "../headers/Image.h"
-#include "../headers/BMPHandler.h"
+#include "Image.h"
+#include "BMPHandler.h"
 
 // FUNCTIONS
 Image* image_create(struct Pixel** pArr, int width, int height) {

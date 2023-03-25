@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../headers/BMPHandler.h"
-#include "../headers/Image.h"
+#include "BMPHandler.h"
+#include "Image.h"
 
 void displayBMP(struct BMP_Header BMP);
 
@@ -81,13 +81,6 @@ int main(int argc, char *argv[]) {
 
     if (outputFileName != NULL) {
         FILE *file_output = fopen(outputFileName, "wb");
-        writeBMPHeader(file_output, &BMP);
-        writeDIBHeader(file_output, &DIB);
-        writePixelsBMP(file_output, image_get_pixels(img), image_get_width(img), image_get_height(img));
-        fclose(file_output);
-        printf("\nFinished Writing to File");
-    } else {
-        FILE *file_output = fopen("output.bmp", "wb");
         writeBMPHeader(file_output, &BMP);
         writeDIBHeader(file_output, &DIB);
         writePixelsBMP(file_output, image_get_pixels(img), image_get_width(img), image_get_height(img));
