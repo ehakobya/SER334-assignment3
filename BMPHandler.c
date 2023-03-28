@@ -81,10 +81,16 @@ void makeDIBHeader(struct DIB_Header* header, int width, int height) {
 }
 
 void readPixelsBMP(FILE* file, struct Pixel** pArr, int width, int height) {
-    int rowSize = (4 - ((width * 3) % 4)) + (width * 3);
+    int padding;
+    int rowSize;
+    if ((width % 4) == 0) {
+        padding = 0;
+        rowSize = width;
+    } else {
+        rowSize = (4 - ((width * 3) % 4)) + (width * 3);
 //    int rowSize = (width * 3 + 3) & ~3; // OTHER METHOD
-    int padding = rowSize - (width * 3);
-
+        padding = rowSize - (width * 3);
+    }
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             fread(&pArr[i][j], sizeof (struct Pixel), 1, file);
@@ -94,11 +100,17 @@ void readPixelsBMP(FILE* file, struct Pixel** pArr, int width, int height) {
 }
 
 void writePixelsBMP(FILE* file, struct Pixel** pArr, int width, int height) {
-//    int rowSize = (4 - ((width * 3) % 4)) + (width * 3);
-    int rowSize = (width * 3 + 3) & ~3;
-    int padding = rowSize - (width * 3);
+    int padding;
+    int rowSize;
+    if ((width % 4) == 0) {
+        padding = 0;
+        rowSize = width;
+    } else {
+        rowSize = (4 - ((width * 3) % 4)) + (width * 3);
+//    int rowSize = (width * 3 + 3) & ~3; // OTHER METHOD
+        padding = rowSize - (width * 3);
+    }
     unsigned char zero[3] = {0, 0, 0};
-
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             fwrite(&pArr[i][j], sizeof (struct Pixel), 1, file);
