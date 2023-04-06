@@ -1,1 +1,1 @@
-# SER334-assignment3
+# Image processing in C

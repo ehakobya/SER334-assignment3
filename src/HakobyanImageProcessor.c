@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "BMPHandler.h"
-#include "Image.h"
+#include "../headers/BMPHandler.h"
+#include "../headers/Image.h"
 
 void displayBMP(struct BMP_Header BMP);
 
