@@ -1,171 +1,194 @@
 /**
-* Main file to apply filters with multithreading
+* Image processing with threads
 *
-* Completion time: 6 hours
+* Completion time: 15 Hours
 *
 * @author Edgar Hakobyan
 * @version 1.0
 */
 
+////////////////////////////////////////////////////////////////////////////////
 //INCLUDES
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "BmpProcessor.h"
 #include "PixelProcessor.h"
-#include <math.h>
 #include <pthread.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
 
+////////////////////////////////////////////////////////////////////////////////
 //MACRO DEFINITIONS
+
+//problem assumptions
+#define THREAD_COUNT 4
 #define BMP_HEADER_SIZE 14
 #define BMP_DIB_HEADER_SIZE 40
 #define MAXIMUM_IMAGE_SIZE 4096
-#define THREAD_COUNT 4
 
+////////////////////////////////////////////////////////////////////////////////
 //DATA STRUCTURES
-typedef struct blurInfo {
-    int startColumn;
-    int endColumn;
+struct threadData {
+    int start;
+    int end;
     int width;
     int height;
-    struct Pixel** pArr;
-} blurInfo;
+    struct Pixel **pArr;
+};
 
-struct Pixel** globalArr;
+struct Pixel **gloablArr;
 
-//PROGRAM FUNCTIONS
 
 /**
- * This method is called by threads and used to blur an image
- * @param param
- * @return 0
+ * Method to apply yellow tint filter over an image
+ * @param pixels pixel array
+ * @param width image width
+ * @param height image height
+ * @param rShift shift red pixels by rShift
+ * @param gShift shift green pixels by gShift
+ * @param bShift shift blue pixels by bShift
  */
-void* runnerBlurFilter (void* param){
+void applyYellowFilter(struct Pixel **pixels, int width, int height, int rShift, int gShift, int bShift) {
+    // Reused from assignment 3
+    for (int i = 0; i < width; i++) {
+        for (int j = 0; j < height; j++) {
+            int newRed = pixels[i][j].red + rShift;
+            int newGreen = pixels[i][j].green + gShift;
+            int newBlue = pixels[i][j].blue + bShift;
+            pixels[i][j].red = (unsigned char) ((newRed > 255) ? 255 : (newRed < 0) ? 0 : newRed);
+            pixels[i][j].green = (unsigned char) ((newGreen > 255) ? 255 : (newGreen < 0) ? 0 : newGreen);
+            pixels[i][j].blue = (unsigned char) ((newBlue > 255) ? 255 : (newBlue < 0) ? 0 : newBlue);
+        }
+    }
+}
 
-    int red, green, blue;
-    int counter = 0;
 
-    int start_col, end_col, width;
+/**
+ * Method used by threads to blur an image.
+ * @param param thread data
+ * @return
+ */
+void *runnerBlur(void *param) {
 
-    blurInfo* data = (blurInfo*) param;
+    struct threadData *data = (struct threadData *) param;
 
-    start_col = data->startColumn;
-    end_col = data->endColumn + 1;
+    int red, green, blue, startCol, endCol, width, count = 0;
+    startCol = data->start;
+    endCol = data->end - 1;
     width = data->width;
 
-    printf("data->startColumn = %d, data->endColumn = %d\n", start_col, end_col);
+    for (int i = 0; i < width; i++) {
+        for (int j = startCol; j <= endCol; j++) {
 
-    for(int i = 0; i < width; i++) {
-        for (int j = start_col; j <= end_col; j++) {
-            red = green = blue = 0;
-            counter = 0;
+            red = 0, green = 0, blue = 0, count = 0;
 
-            // row above, col to the left
-            if (i + 1 < width && j - 1 >= start_col) {
-                red += data->pArr[i + 1][j - 1].red;
-                green += data->pArr[i + 1][j - 1].green;
+            if (i + 1 < width && j - 1 >= startCol) {
                 blue += data->pArr[i + 1][j - 1].blue;
-                counter++;
+                green += data->pArr[i + 1][j - 1].green;
+                red += data->pArr[i + 1][j - 1].red;
+                count++;
             }
-            // row above, col to the right
-            if (i + 1 < width && j + 1 < end_col) {
-                red += data->pArr[i + 1][j + 1].red;
-                green += data->pArr[i + 1][j + 1].green;
+
+            if (i + 1 < width && j + 1 < endCol) {
                 blue += data->pArr[i + 1][j + 1].blue;
-                counter++;
+                green += data->pArr[i + 1][j + 1].green;
+                red += data->pArr[i + 1][j + 1].red;
+                count++;
             }
-            // row above, col to the center
+
             if (i + 1 < width) {
-                red += data->pArr[i + 1][j].red;
-                green += data->pArr[i + 1][j].green;
                 blue += data->pArr[i + 1][j].blue;
-                counter++;
+                green += data->pArr[i + 1][j].green;
+                red += data->pArr[i + 1][j].red;
+                count++;
             }
 
-            // same row, col to the right
-            if (j + 1 < end_col) {
-                red += data->pArr[i][j + 1].red;
-                green += data->pArr[i][j + 1].green;
+            if (j + 1 < endCol) {
                 blue += data->pArr[i][j + 1].blue;
-                counter++;
+                green += data->pArr[i][j + 1].green;
+                red += data->pArr[i][j + 1].red;
+                count++;
             }
 
-            // same row, col to the left
-            if (j - 1 >= start_col) {
-                red += data->pArr[i][j - 1].red;
-                green += data->pArr[i][j - 1].green;
+            if (j - 1 >= startCol) {
                 blue += data->pArr[i][j - 1].blue;
-                counter++;
+                green += data->pArr[i][j - 1].green;
+                red += data->pArr[i][j - 1].red;
+                count++;
             }
 
-            // add the one in question
-            red += data->pArr[i][j].red;
-            green += data->pArr[i][j].green;
             blue += data->pArr[i][j].blue;
-            counter++;
+            green += data->pArr[i][j].green;
+            red += data->pArr[i][j].red;
+            count++;
 
-            // row below, col to the left
-            if (i - 1 >= 0 && j - 1 >= start_col) {
-                red += data->pArr[i - 1][j - 1].red;
-                green += data->pArr[i - 1][j - 1].green;
+            if (i - 1 >= 0 && j - 1 >= startCol) {
                 blue += data->pArr[i - 1][j - 1].blue;
-                counter++;
+                green += data->pArr[i - 1][j - 1].green;
+                red += data->pArr[i - 1][j - 1].red;
+                count++;
             }
-            // row below, col to the left
-            if (i - 1 >= 0 && j + 1 < end_col) {
-                red += data->pArr[i - 1][j + 1].red;
-                green += data->pArr[i - 1][j + 1].green;
+            if (i - 1 >= 0 && j + 1 < endCol) {
                 blue += data->pArr[i - 1][j + 1].blue;
-                counter++;
+                green += data->pArr[i - 1][j + 1].green;
+                red += data->pArr[i - 1][j + 1].red;
+                count++;
             }
-            // row below, col to the left
             if (i - 1 >= 0) {
-                red += data->pArr[i - 1][j].red;
-                green += data->pArr[i - 1][j].green;
                 blue += data->pArr[i - 1][j].blue;
-                counter++;
+                green += data->pArr[i - 1][j].green;
+                red += data->pArr[i - 1][j].red;
+                count++;
             }
-            globalArr[i][j].red = (int)round(red/counter) ;
-            globalArr[i][j].green = (int)round(green/counter);
-            globalArr[i][j].blue = (int)round( blue/counter );
+
+            gloablArr[i][j].blue = (int) round(blue / count);
+            gloablArr[i][j].green = (int) round(green / count);
+            gloablArr[i][j].red = (int) round(red / count);
         }
     }
     return 0;
 }
 
+
 /**
- * Creates large holes in the image
- * @param param - data of the image
+ * Method used by threads to make large sized holes in the image.
+ * @param param thread data
  * @return
  */
-void* runnerCheeseFilterLargeHoles (void* param){
-    int s, centerRow, centerCol, i, j;
+void *runnerLargeHole(void *param) {
 
-    blurInfo* data = (blurInfo*) param;
+    int i, j, k;
+    int width, height;
+    int centerRow, centerCol;
+    int numHoles, numLargeHoles, largeHoleRadius;
 
-    // radius for the holes
-    int largerRadius = (int) round(data->width * 0.15);
+    struct threadData *data = (struct threadData *) param;
 
-    // get 10% of width to find number of holes
-    int numOfHoles = (int) round(data->height * 0.1);
+    width = data->width;
+    height = data->height;
 
+    // determines if picture is portrait or landscape
+    if (width < height) {
+        largeHoleRadius = (int) round(width * 0.12);
+        numHoles = (int) round(width * 0.08);
+    } else {
+        largeHoleRadius = (int) round(height * 0.12);
+        numHoles = (int) round(height * 0.08);
+    }
 
-    //int largeHoles = (int) round(numOfHoles * 0.25);
-    int largeHoles = (numOfHoles * 0.25);
+    numLargeHoles = (int) round(numHoles * 0.25);
 
-    printf("Number of largeHoles: %d \n", largeHoles);
+    for (i = 0; i < numLargeHoles; i++) {
+        centerRow = rand() % width;
+        centerCol = rand() % height;
 
-    for(s = 0; s <  largeHoles; s ++) {
-        centerRow = rand() % data->width;
-        centerCol = rand() % data->height;
-
-        for(i = 0; i < data->width; i++) {
-            for (j = 0; j < data->height; j++) {
-                double d = sqrt(((i - centerRow)*(i-centerRow)) +((j-centerCol)*(j-centerCol)));
-                if(d < largerRadius){
-                    globalArr[i][j].red = 0;
-                    globalArr[i][j].green = 0;
-                    globalArr[i][j].blue = 0;
+        for (j = 0; j < width; j++) {
+            for (k = 0; k < height; k++) {
+                double r = sqrt(((j - centerRow) * (j - centerRow)) + ((k - centerCol) * (k - centerCol)));
+                if (r < largeHoleRadius) {
+                    gloablArr[j][k].blue = 0;
+                    gloablArr[j][k].green = 0;
+                    gloablArr[j][k].red = 0;
                 }
             }
         }
@@ -173,67 +196,46 @@ void* runnerCheeseFilterLargeHoles (void* param){
     return 0;
 }
 
+
 /**
- * Creates small holes in the image
- * @param param - struct holding data of the image
- * @return - 0
- */
-void* runnerCheeseFilterSmallHoles (void* param){
-    int s, centerRow, centerCol, i, j;
-    blurInfo* data = (blurInfo*) param;
-
-    int smallRadius = (int) round(data->width * 0.05);
-    int numOfHoles = (int) round(data->height * 0.1);
-
-    int smallHoles = (int) round(numOfHoles * 0.25);
-    // int smallHoles = (numOfHoles - (numOfHoles - (numOfHoles / 2)) / 2);
-    printf("Number of smallHoles: %d \n", smallHoles);
-
-    for(s = 0; s <  smallHoles; s ++) {
-        centerRow = rand() % data->width;
-        centerCol = rand() % data->height;
-
-        for(i = 0; i < data->width; i++) {
-            for (j = 0; j < data->height; j++) {
-                double d = sqrt(((i - centerRow)*(i-centerRow)) +((j-centerCol)*(j-centerCol)));
-                if(d < smallRadius){
-                    globalArr[i][j].red = 0;
-                    globalArr[i][j].green = 0;
-                    globalArr[i][j].blue = 0;
-                }
-            }
-        }
-    }
-    return 0;
-}
-/**
- * Creates average sized holes on the image
- * @param param - data struct holding info on image
+ * Method used by threads to make medium sized holes in the image.
+ * @param param thread data
  * @return
  */
-void* runnerCheeseFilterAverHoles (void* param){
-    printf("\nIn runnerCheeseFilterAverHoles\n");
-    blurInfo* data = (blurInfo*) param;
-    int s, centerRow, centerCol, i, j;
+void *runnerMediumHole(void *param) {
 
-    // Average holes
-    int averRadius = (int) round(data->width * 0.1);
-    int numOfHoles = (int) round(data->height * 0.1);
-    int avergHoles = (int) round(numOfHoles * 0.5);
+    int i, j, k;
+    int width, height;
+    int centerRow, centerCol;
+    int numHoles, numLargeHoles, largeHoleRadius;
 
-    srand(time(0));
+    struct threadData *data = (struct threadData *) param;
 
-    for(s = 0; s <  avergHoles; s ++) {
-        centerRow = rand() % (data->width + 1 - 0);
-        centerCol = rand() % (data->height + 1 - 0);
+    width = data->width;
+    height = data->height;
 
-        for(i = 0; i < data->width; i++) {
-            for (j = 0; j < data->height; j++) {
-                double d = sqrt(((i - centerRow)*(i-centerRow)) +((j-centerCol)*(j-centerCol)));
-                if(d < averRadius){
-                    globalArr[i][j].red = 0;
-                    globalArr[i][j].green = 0;
-                    globalArr[i][j].blue = 0;
+    // determines if picture is portrait or landscape
+    if (width < height) {
+        largeHoleRadius = (int) round(width * 0.08);
+        numHoles = (int) round(width * 0.08);
+    } else {
+        largeHoleRadius = (int) round(height * 0.08);
+        numHoles = (int) round(height * 0.08);
+    }
+
+    numLargeHoles = (int) round(numHoles * 0.5);
+
+    for (i = 0; i < numLargeHoles; i++) {
+        centerRow = rand() % width;
+        centerCol = rand() % height;
+
+        for (j = 0; j < width; j++) {
+            for (k = 0; k < height; k++) {
+                double r = sqrt(((j - centerRow) * (j - centerRow)) + ((k - centerCol) * (k - centerCol)));
+                if (r < largeHoleRadius) {
+                    gloablArr[j][k].blue = 0;
+                    gloablArr[j][k].green = 0;
+                    gloablArr[j][k].red = 0;
                 }
             }
         }
@@ -241,92 +243,149 @@ void* runnerCheeseFilterAverHoles (void* param){
     return 0;
 }
 
+
 /**
- * Function used to copy and edit bpm file
- * @param inPutFileName
- * @param outPutFileName
- * @param filter
+ * Method used by threads to make small sized holes in the image.
+ * @param param thread data
+ * @return
  */
-void copyBMPFiles(char* inPutFileName, char* outPutFileName, int filter){
+void *runnerSmallHole(void *param) {
 
-    FILE *file;
-    file = fopen(inPutFileName, "rb");
+    int i, j, k;
+    int width, height;
+    int centerRow, centerCol;
+    int numHoles, numLargeHoles, largeHoleRadius;
 
+    struct threadData *data = (struct threadData *) param;
+
+    width = data->width;
+    height = data->height;
+
+    // determines if picture is portrait or landscape
+    if (width < height) {
+        largeHoleRadius = (int) round(width * 0.04);
+        numHoles = (int) round(width * 0.08);
+    } else {
+        largeHoleRadius = (int) round(height * 0.04);
+        numHoles = (int) round(height * 0.08);
+    }
+
+    numLargeHoles = (int) round(numHoles * 0.25);
+
+    for (i = 0; i < numLargeHoles; i++) {
+        centerRow = rand() % width;
+        centerCol = rand() % height;
+
+        for (j = 0; j < width; j++) {
+            for (k = 0; k < height; k++) {
+                double r = sqrt(((j - centerRow) * (j - centerRow)) + ((k - centerCol) * (k - centerCol)));
+                if (r < largeHoleRadius) {
+                    gloablArr[j][k].blue = 0;
+                    gloablArr[j][k].green = 0;
+                    gloablArr[j][k].red = 0;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+
+/**
+ * Main
+ * @param argc number of arguments
+ * @param argv argument array
+ */
+void main(int argc, char *argv[]) {
+
+    char *inputFileName = NULL;
+    char *outputFileName = NULL;
+    char *filter = NULL;
+
+    int width, height, colWidth;
+
+    for (int i = 1; i < argc; i++) {
+        if ((strcmp(argv[i], "-i") == 0)) {
+            printf("-i\n");
+            inputFileName = argv[i + 1];
+        } else if ((strcmp(argv[i], "-o") == 0)) {
+            printf("-o\n");
+            outputFileName = argv[i + 1];
+        } else if ((strcmp(argv[i], "-f") == 0)) {
+            printf("-f\n");
+            filter = argv[i + 1];
+        }
+    }
+
+    FILE *file = fopen(inputFileName, "rb");
     if (file == NULL) {
-        printf("---> Cannot open file: %s \n", inPutFileName);
+        printf("---> Cannot open file: %s \n", inputFileName);
         exit(0);
     } else{
-        printf("---> File opened\n");
+        printf("---> %s file opened\n", inputFileName);
     }
 
-    struct BMP_Header* BMP_Header;
-    BMP_Header = (struct BMP_Header*)malloc(sizeof(struct BMP_Header));
-    readBMPHeader(file, BMP_Header); // read Header info from file
 
-    struct DIB_Header* DIB_header;
-    DIB_header = (struct DIB_Header*)malloc(sizeof(struct DIB_Header));
-    readDIBHeader(file, DIB_header);
+    // read BMP Header info
+    struct BMP_Header *bmpHeader;
+    bmpHeader = (struct BMP_Header *) malloc(sizeof(struct BMP_Header));
+    readBMPHeader(file, bmpHeader);
 
-    // This is for information store in a struct to be passed to the thread function
-    blurInfo blurData;
-    blurData.pArr = (struct Pixel**) malloc(sizeof(struct Pixel*) * DIB_header->width);
-    int i;
-    for(i = 0; i < DIB_header->width; i++){
-        blurData.pArr[i] = malloc(sizeof(struct Pixel) * DIB_header->height);
-    }
-    blurData.width = DIB_header->width;
-    blurData.height = DIB_header->height;
+    // read DIB Header info
+    struct DIB_Header *dibHeader;
+    dibHeader = (struct DIB_Header *) malloc(sizeof(struct DIB_Header));
+    readDIBHeader(file, dibHeader);
 
-    // Lets initialise the globalArray to hold the pixels with the filter applied
-    globalArr = (struct Pixel**) malloc(sizeof(struct Pixel*) * DIB_header->width);
-    int gA;
-    for(gA = 0; gA < DIB_header->width; gA++){
-        globalArr[gA] = malloc(sizeof(struct Pixel) * DIB_header->height);
+
+    struct threadData data;
+    width = dibHeader->width;
+    height = dibHeader->height;
+    data.width = width;
+    data.height = height;
+    data.pArr = (struct Pixel **) malloc(sizeof(struct Pixel *) * width);
+    for (int i = 0; i < width; i++) {
+        data.pArr[i] = malloc(sizeof(struct Pixel) * height);
     }
 
-    // Read in pixels and store in the struct array
-    readPixelsBMP(file, blurData.pArr, DIB_header->width, DIB_header->height);
-    // close the read in file
+    gloablArr = (struct Pixel **) malloc(sizeof(struct Pixel *) * width);
+    for (int i = 0; i < width; i++) {
+        gloablArr[i] = malloc(sizeof(struct Pixel) * height);
+    }
+
+    readPixelsBMP(file, data.pArr, width, height);
     fclose(file);
 
-    // carry out blur filter if argument is 0 else carry out swiss cheese filter
-    if (filter == 0){
-        printf("in filter\n");
-        int d, col_length;
-        int remainder = DIB_header->width % THREAD_COUNT;
 
-        if(remainder != 0){
-            printf("remained is: %d", remainder);
-            //DIB_header->image_width - remainder;
-            col_length = (DIB_header->width - remainder) / THREAD_COUNT;
-        }else {
-            col_length = DIB_header->width/THREAD_COUNT;
+    if (strcmp(filter, "b") == 0) {
+        int rem = width % THREAD_COUNT;
+        // determine column size based on given thread count
+        if (rem != 0) {
+            colWidth = (width - rem) / THREAD_COUNT;
+        } else {
+            colWidth = width / THREAD_COUNT;
         }
-        pthread_t arrOfIDs[THREAD_COUNT];
-        pthread_attr_t arrOfARGS[THREAD_COUNT];
 
-        for(d = 0; d < THREAD_COUNT; d++) {
-            blurData.startColumn = d * col_length;
-            if (blurData.startColumn > 0)
-                blurData.startColumn -= 1;
+        pthread_t tids[THREAD_COUNT];
+        pthread_attr_t attributes[THREAD_COUNT];
 
-            blurData.endColumn = ((d + 1) * col_length); // -1
-            if ( d == THREAD_COUNT-1 && remainder != 0){
-                printf("Should not fire");
-                blurData.endColumn += remainder;
+        for (int i = 0; i < THREAD_COUNT; i++) {
+            data.start = i * colWidth;
+            if (data.start > 0) {
+                data.start -= 1;
+            }
+            data.end = ((i + 1) * colWidth);
+            if (i == THREAD_COUNT - 1 && rem != 0) {
+                data.end += rem;
             }
 
-            pthread_attr_init(&arrOfARGS[d]);
-            pthread_create(&arrOfIDs[d], &arrOfARGS[d], runnerBlurFilter, &blurData);
-            pthread_join(arrOfIDs[d] , NULL);
+            pthread_attr_init(&attributes[i]);
+            pthread_create(&tids[i], &attributes[i], runnerBlur, &data);
+            pthread_join(tids[i], NULL);
         }
-    } else {
-        int col_length, d;
 
-        // apply yellow tint.
-        colorShiftPixels(blurData.pArr, DIB_header->width, DIB_header->height,
-                         50, 50, 0);
-        printf("calling function in thread");
+    } else if (strcmp(filter, "c") == 0) {
+
+        applyYellowFilter(data.pArr, width, height, 60, 60, 0);
 
         pthread_t tid1, tid2, tid3;
         pthread_attr_t attr1, attr2, attr3;
@@ -334,81 +393,43 @@ void copyBMPFiles(char* inPutFileName, char* outPutFileName, int filter){
         pthread_attr_init(&attr1);
         pthread_attr_init(&attr2);
         pthread_attr_init(&attr3);
-
-        pthread_create (&tid1 , &attr1 , runnerCheeseFilterAverHoles, &blurData);
-        pthread_create (&tid2 , &attr2 , runnerCheeseFilterSmallHoles, &blurData);
-        pthread_create (&tid3 , &attr3 , runnerCheeseFilterLargeHoles, &blurData);
-
+        pthread_create(&tid1, &attr1, runnerMediumHole, &data);
+        pthread_create(&tid2, &attr2, runnerSmallHole, &data);
+        pthread_create(&tid3, &attr3, runnerLargeHole, &data);
         pthread_join(tid1, NULL);
         pthread_join(tid2, NULL);
         pthread_join(tid3, NULL);
     }
 
-    printf("\n-------------------------------\n");
-
-    // Open bmp file to read
-    FILE *outPutPtr;
-    outPutPtr = fopen(outPutFileName, "wb");
-
-    if (outPutPtr == NULL) {
-        printf("Cannot open file %s \n", outPutFileName);
+    FILE *outFile = fopen(outputFileName, "wb");
+    if (outFile == NULL) {
+        printf("---> Cannot open file: %s \n", outputFileName);
         exit(0);
     } else{
-        printf("File to be written to is open...\n");
+        printf("---> %s file opened\n", outputFileName);
     }
 
-    writeBMPHeader(outPutPtr, BMP_Header);
+    writeBMPHeader(outFile, bmpHeader);
+    writeDIBHeader(outFile, dibHeader);
+    writePixelsBMP(outFile, gloablArr, dibHeader->width, dibHeader->height);
 
-    writeDIBHeader(outPutPtr, DIB_header);
+    fclose(outFile);
+    printf("---> Finished writing to file\n");
+    printf("---> File Closed\n");
 
-    //writePixelsBMP(outPutPtr, pArr, DIB_header->image_width, DIB_header->image_height);
-    writePixelsBMP(outPutPtr, globalArr, DIB_header->width, DIB_header->height);
-
-    fclose(outPutPtr);
-
-    printf("That is the function completed!\n");
-
-    free(*blurData.pArr);
-    *blurData.pArr = NULL;
-
-    free(BMP_Header);
-    BMP_Header = NULL;
-
-    free(DIB_header);
-    DIB_header = NULL;
-
-    fclose(outPutPtr);
+    free(*data.pArr);
+    free(bmpHeader);
+    free(dibHeader);
+    free(gloablArr);
+    bmpHeader = NULL;
+    dibHeader = NULL;
+    *data.pArr = NULL;
+    gloablArr = NULL;
 }
 
-/**
- * Main
- * @param argc - number of arguments
- * @param argv - input file and output file and type of filter
- */
-void main(int argc, char* argv[]) {
 
-    char* inPutFileName = NULL;
-    char* outPutFileName = NULL;
-    char* filter = NULL;
 
-    for (int i = 1; i < argc; i++){
 
-        if (0 == (strcmp(argv[i], "-i"))) {
-            inPutFileName = argv[i + 1];
-        } else if (0 == (strcmp(argv[i], "-o"))){
-            outPutFileName = argv[i + 1];
-        } else if (0 == (strcmp(argv[i], "-f"))){
-            filter = argv[i + 1];
-        }
-    }
 
-    printf("\ninput = %s", inPutFileName);
-    printf("\noutput = %s", outPutFileName);
-    printf("\nfilter = %s", filter);
 
-    if (0 == (strcmp(filter, "b"))){
-        copyBMPFiles(inPutFileName, outPutFileName, 0);
-    } else {
-        copyBMPFiles(inPutFileName, outPutFileName, 5);
-    }
-}
+
