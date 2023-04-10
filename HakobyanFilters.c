@@ -1,7 +1,7 @@
 /**
 * Image processing with threads
 *
-* Completion time: 15 Hours
+* Completion time: 23 Hours
 *
 * @author Edgar Hakobyan
 * @version 1.0
@@ -55,9 +55,9 @@ void applyYellowFilter(struct Pixel **pixels, int width, int height, int rShift,
             int newRed = pixels[i][j].red + rShift;
             int newGreen = pixels[i][j].green + gShift;
             int newBlue = pixels[i][j].blue + bShift;
-            pixels[i][j].red = (unsigned char) ((newRed > 255) ? 255 : (newRed < 0) ? 0 : newRed);
-            pixels[i][j].green = (unsigned char) ((newGreen > 255) ? 255 : (newGreen < 0) ? 0 : newGreen);
-            pixels[i][j].blue = (unsigned char) ((newBlue > 255) ? 255 : (newBlue < 0) ? 0 : newBlue);
+            gloablArr[i][j].red = ((newRed > 255) ? 255 : (newRed < 0) ? 0 : newRed);
+            gloablArr[i][j].green = ((newGreen > 255) ? 255 : (newGreen < 0) ? 0 : newGreen);
+            gloablArr[i][j].blue = ((newBlue > 255) ? 255 : (newBlue < 0) ? 0 : newBlue);
         }
     }
 }
@@ -306,13 +306,10 @@ void main(int argc, char *argv[]) {
 
     for (int i = 1; i < argc; i++) {
         if ((strcmp(argv[i], "-i") == 0)) {
-            printf("-i\n");
             inputFileName = argv[i + 1];
         } else if ((strcmp(argv[i], "-o") == 0)) {
-            printf("-o\n");
             outputFileName = argv[i + 1];
         } else if ((strcmp(argv[i], "-f") == 0)) {
-            printf("-f\n");
             filter = argv[i + 1];
         }
     }
@@ -383,7 +380,7 @@ void main(int argc, char *argv[]) {
             pthread_join(tids[i], NULL);
         }
 
-    } else if (strcmp(filter, "c") == 0) {
+    } else {
 
         applyYellowFilter(data.pArr, width, height, 60, 60, 0);
 
