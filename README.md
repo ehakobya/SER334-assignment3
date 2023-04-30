@@ -1,4 +1,5 @@
-## SER334-assignment3
+## Image processing algorithms in C with multi-threading
+
 > Image processing in C part 1
 >
 > https://github.com/ehakobya/image-processing/tree/assignment3
@@ -11,13 +12,12 @@
 > 
 
 
-## SER334-assignment6
 > Image processing in C part 2
 >
 > https://github.com/ehakobya/image-processing/tree/assignment6
 >
->> Apply blur filter to BMP image
+>> Apply blur filter to BMP image with threads
 >
->> TODO
+>> Apply color shift with threads
 >
->> TODO
+>> Apply swiss cheese filter with threads
